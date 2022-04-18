@@ -156,6 +156,8 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
           EndIf
         EndIf
     EndSelect
+    
+    Delay(1)
   ForEver
   CloseWindow(0)
 EndIf
@@ -294,12 +296,14 @@ Procedure ApplyFilter()
     DrawingMode(#PB_2DDrawing_Default)
     DrawImage(ImageID(2), 0, 0, GadgetWidth(1), GadgetHeight(1))  
     StopDrawing()
+    
+    ev = WindowEvent()
 	Next
 EndProcedure
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 106
-; FirstLine = 94
+; CursorPosition = 299
+; FirstLine = 265
 ; Folding = -
 ; EnableXP
 ; Executable = retro filter.exe
