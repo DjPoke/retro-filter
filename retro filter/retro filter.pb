@@ -387,7 +387,8 @@ EndProcedure
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
 ; CursorPosition = 377
-; FirstLine = 357
+; FirstLine = 356
 ; Folding = --
 ; EnableXP
+; UseIcon = icons\icon.ico
 ; Executable = retro filter.exe
