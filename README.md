@@ -7,4 +7,5 @@
  
  DjPoke
  
- ![Capture 1](captures/captures.png)
+ ![Capture 1](captures/capture1.png)
+ ![Capture 2](captures/capture2.png)
