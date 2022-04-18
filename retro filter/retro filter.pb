@@ -18,7 +18,7 @@ Declare UpdatePal(p)
 Declare ApplyFilter()
 Declare RemoveLastColorToPalette()
 Declare RemoveAllColorsToPalette()
-
+Declare.l GetMode()
 
 ; vars
 Global Dim pal(#MAX_PALETTES, #MAX_COLORS)
@@ -37,15 +37,26 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
     MenuItem(11, "New Palette")
     MenuItem(12, "Save Palette")
     MenuBar()
-    MenuItem(13, "Add Color")
-    MenuItem(14, "Remove Last Color")
+    MenuItem(13, "Add Color"   +Chr(9)+"Ctrl+A")
+    MenuItem(14, "Remove Last Color"   +Chr(9)+"Ctrl+Del")
     MenuBar()
     MenuItem(15, "Remove All Colors")
     MenuBar()
     MenuItem(16, "Save All Configuration")
+    
+    MenuTitle("Filter")
+    MenuItem(21, "Mode 0")
+    MenuItem(22, "Mode 1")
+    MenuItem(23, "Mode 2")
+    MenuItem(24, "Mode 3")
+    
+    MenuTitle("View")
+    MenuItem(31, "Refresh")
+    
+    SetMenuItemState(0, 24, 1)
   EndIf
       
-  CanvasGadget(1, 0, 200, 800, 400)
+  CanvasGadget(1, 0, 200, 800, 400, #PB_Canvas_Keyboard)
   PanelGadget(2, 0, 0, 800, 200)  
   CloseGadgetList()
   
@@ -53,6 +64,8 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
   AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_O, 2)
   AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_S, 3)
   AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_Q, 9)
+  AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_A, 13)
+  AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_Delete, 14)
   
   For j = 1 To #MAX_PALETTES
     For i = 1 To #MAX_COLORS
@@ -126,6 +139,8 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
               CanvasGadget(CountGadgetItems(2) + 2, 0, 0, 800, 600 - GetGadgetAttribute(2, #PB_Panel_TabHeight))
               CloseGadgetList()
               
+              SetGadgetState(2, CountGadgetItems(2) - 1)
+              
               UpdatePal(CountGadgetItems(2) + 2)
             Else
               MessageRequester("Error", "Too many palettes !", #PB_MessageRequester_Error)
@@ -142,6 +157,20 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
             RemoveLastColorToPalette()
           Case 15
             RemoveAllColorsToPalette()
+          Case 21, 22, 23, 24
+            SetMenuItemState(0, 21, 0)
+            SetMenuItemState(0, 22, 0)
+            SetMenuItemState(0, 23, 0)
+            SetMenuItemState(0, 24, 0)
+            
+            SetMenuItemState(0, em, 1)
+          Case 31
+            p = GetGadgetState(2) + 1
+            g = p + 2
+
+            If cptCol(p) > 1 And IsImage(1)
+              ApplyFilter()
+            EndIf
         EndSelect
       Case #PB_Event_Gadget
         eg = EventGadget()
@@ -181,9 +210,9 @@ Procedure RemoveLastColorToPalette()
   p = GetGadgetState(2) + 1
   g = p + 2
   
-  If cptCol(p) = 0 : Return : EndIf
-  
-  cptCol(p) - 1
+  If cptCol(p) > 0
+    cptCol(p) - 1
+  EndIf
   
   UpdatePal(g)
 EndProcedure
@@ -223,37 +252,43 @@ EndProcedure
 
 Procedure ApplyFilter()
   p = GetGadgetState(2) + 1
-  g = p + 2
+  md.l = GetMode()
   
   If IsImage(2) : FreeImage(2) : EndIf
-
   CreateImage(2, ImageWidth(1), ImageHeight(1))
-    
+  
+  Dim pt.l(ImageWidth(1), ImageHeight(1))
+  
+  StartDrawing(ImageOutput(1))
+  DrawingMode(#PB_2DDrawing_Default)
 	For y = 0 To ImageHeight(1) - 1
 	  For x = 0 To ImageWidth(1) - 1
-  	  StartDrawing(ImageOutput(1))
-      DrawingMode(#PB_2DDrawing_Default)
-      c = Point(x, y)
-      StopDrawing()
-      
-  	  StartDrawing(ImageOutput(2))
-      DrawingMode(#PB_2DDrawing_Default)
-      
-      r = Red(c)
-      g = Green(c)
-      b = Blue(c)
+	    pt(x, y) = Point(x, y)
+	  Next
+	Next
+  StopDrawing()
+  
+  ;
+  For y = 0 To ImageHeight(1) - 1
+    StartDrawing(ImageOutput(2))
+    DrawingMode(#PB_2DDrawing_Default)
+    
+    For x = 0 To ImageWidth(1) - 1
+      r.l = (Round(Red(pt(x, y)) / md, #PB_Round_Down) * md) + md - 1
+      g.l = (Round(Green(pt(x, y)) / md, #PB_Round_Down) * md) + md - 1
+      b.l = (Round(Blue(pt(x, y)) / md, #PB_Round_Down) * md) + md - 1
 
-			found = #False
+			found.b = #False
 			
-			distr = 255
-			distg = 255
-			distb = 255
+			distr.w = 255
+			distg.w = 255
+			distb.w = 255
 			
-			memdistr = 255
-			memdistg = 255
-			memdistb = 255
+			memdistr.w = 255
+			memdistg.w = 255
+			memdistb.w = 255
 			
-			c = 0
+			c.b = 0
 
 			; find exact color
 			For i = 1 To cptCol(p)
@@ -264,7 +299,7 @@ Procedure ApplyFilter()
 					Break
 				EndIf
 			Next
-			
+
 			; find an approximative color
 			If Not found
   			For i = 1 To cptCol(p)
@@ -287,23 +322,48 @@ Procedure ApplyFilter()
 			If found
 			  Plot(x, y, pal(p, c))
 			EndIf
-		
-		  StopDrawing()
+			
+			ev = WindowEvent()
+			
+			; esc to stop render
+			If ev = #PB_Event_Gadget
+			  eg = EventGadget()
+			  
+			  If eg = 1
+			    If GetGadgetAttribute(1, #PB_Canvas_Key) = #pb_shortcut_escape
+			      StopDrawing()
+			      
+			      Break(2)
+			    EndIf
+			  EndIf
+			EndIf
 		Next
+					
+		StopDrawing()
 
     ; update the view
-    StartDrawing(CanvasOutput(1))
+		StartDrawing(CanvasOutput(1))
     DrawingMode(#PB_2DDrawing_Default)
     DrawImage(ImageID(2), 0, 0, GadgetWidth(1), GadgetHeight(1))  
     StopDrawing()
-    
-    ev = WindowEvent()
 	Next
 EndProcedure
 
+Procedure.l GetMode()
+  md.l = 0
+  
+  If GetMenuItemState(0, 21) = 1 : md = 64 : EndIf
+  If GetMenuItemState(0, 22) = 1 : md = 32 : EndIf
+  If GetMenuItemState(0, 23) = 1 : md = 16 : EndIf
+  If GetMenuItemState(0, 24) = 1 : md = 8 : EndIf
+  
+  ProcedureReturn md
+EndProcedure
+
+
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 299
-; FirstLine = 265
-; Folding = -
+; CursorPosition = 332
+; FirstLine = 312
+; Folding = --
 ; EnableXP
 ; Executable = retro filter.exe
