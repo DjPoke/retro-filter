@@ -18,8 +18,6 @@ Declare UpdatePal(p)
 Declare ApplyFilter()
 
 ; vars
-opened = #False
-
 Global Dim pal(#MAX_PALETTES, #MAX_COLORS)
 Global Dim cptCol(#MAX_PALETTES)
 
@@ -68,8 +66,6 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
         
         Select em
           Case 1
-            opened = #False
-            
             FreeGadget(2)
             PanelGadget(2, 0, 0, 800, 200)
             CloseGadgetList()
@@ -80,9 +76,20 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
               If IsImage(1) : FreeImage(1) : EndIf
               
               LoadImage(1, file$)
+              
+              ; update the view
+              StartDrawing(CanvasOutput(1))
+              DrawingMode(#PB_2DDrawing_Default)
+              DrawImage(ImageID(1), 0, 0, GadgetWidth(1), GadgetHeight(1))  
+              StopDrawing()
+              
+              p = GetGadgetState(2) + 1
+              g = p + 2
+
+              If cptCol(p) > 1
+                ApplyFilter()
+              EndIf
             EndIf
-            
-            ApplyFilter()
           Case 9
             Break
           Case 11
@@ -105,6 +112,18 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
               EndIf
             EndIf
         EndSelect
+      Case #PB_Event_Gadget
+        eg = EventGadget()
+        et = EventType()
+        
+        If eg = 1
+          p = GetGadgetState(2) + 1
+          g = p + 2
+
+          If cptCol(p) > 1 And IsImage(1) And et = #PB_Event_LeftClick
+            ApplyFilter()
+          EndIf
+        EndIf
     EndSelect
   ForEver
   CloseWindow(0)
@@ -141,8 +160,6 @@ Procedure UpdatePal(g)
 EndProcedure
 
 Procedure ApplyFilter()
-  If Not IsImage(1) : Return : EndIf
-  
   p = GetGadgetState(2) + 1
   g = p + 2
   
@@ -208,28 +225,21 @@ Procedure ApplyFilter()
 			EndIf
 		
 		  StopDrawing()
-	  Next
+		Next
+
+    ; update the view
+    StartDrawing(CanvasOutput(1))
+    DrawingMode(#PB_2DDrawing_Default)
+    DrawImage(ImageID(2), 0, 0, GadgetWidth(1), GadgetHeight(1))  
+    StopDrawing()
 	Next
-  
-  ; update the view
-  StartDrawing(CanvasOutput(1))
-  DrawingMode(#PB_2DDrawing_Default)
-  
-  If ImageWidth(2) > GadgetWidth(1) Or ImageHeight(2) > GadgetHeight(1)
-    DrawImage(ImageID(2), 0, 0, GadgetWidth(1), GadgetHeight(1))
-  Else
-    Box(0, 0, GadgetWidth(2), GadgetHeight(2), RGB(255, 255, 255))
-    DrawImage(ImageID(2), 0, 0)
-  EndIf
-  
-  StopDrawing()
   
   FreeImage(2)
 EndProcedure
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 206
-; FirstLine = 196
+; CursorPosition = 122
+; FirstLine = 107
 ; Folding = -
 ; EnableXP
 ; Executable = retro filter.exe
