@@ -16,6 +16,9 @@ UseJPEGImageEncoder()
 Declare AddColorToPalette(col)
 Declare UpdatePal(p)
 Declare ApplyFilter()
+Declare RemoveLastColorToPalette()
+Declare RemoveAllColorsToPalette()
+
 
 ; vars
 Global Dim pal(#MAX_PALETTES, #MAX_COLORS)
@@ -31,12 +34,15 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
     MenuItem(9, "Quit"   +Chr(9)+"Ctrl+Q")
     
     MenuTitle("Palette")
-    MenuItem(11, "New")
-    MenuItem(12, "Save")
+    MenuItem(11, "New Palette")
+    MenuItem(12, "Save Palette")
     MenuBar()
     MenuItem(13, "Add Color")
+    MenuItem(14, "Remove Last Color")
     MenuBar()
-    MenuItem(19, "Save Configuration")
+    MenuItem(15, "Remove All Colors")
+    MenuBar()
+    MenuItem(16, "Save All Configuration")
   EndIf
       
   CanvasGadget(1, 0, 200, 800, 400)
@@ -69,6 +75,7 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
             FreeGadget(2)
             PanelGadget(2, 0, 0, 800, 200)
             CloseGadgetList()
+            cptCol(p) = 0
           Case 2
             file$ = OpenFileRequester("Open...", "", "Images|*.png;*.jpg;*.jpeg;*.bmp", 0)
             
@@ -90,6 +97,15 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
                 ApplyFilter()
               EndIf
             EndIf
+          Case 3
+            file$ = SaveFileRequester("Open...", "", "Images|*.png;*.jpg;*.jpeg;*.bmp", 0)
+            
+            If file$ <> ""
+              ApplyFilter()
+              
+              SaveImage(2, file$)
+            EndIf
+
           Case 9
             Break
           Case 11
@@ -111,16 +127,20 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
                 AddColorToPalette(col)
               EndIf
             EndIf
+          Case 14
+            RemoveLastColorToPalette()
+          Case 14
+            RemoveAllColorsToPalette()
         EndSelect
       Case #PB_Event_Gadget
         eg = EventGadget()
         et = EventType()
         
-        If eg = 1
+        If eg = 1 And et = #PB_EventType_LeftClick
           p = GetGadgetState(2) + 1
           g = p + 2
 
-          If cptCol(p) > 1 And IsImage(1) And et = #PB_Event_LeftClick
+          If cptCol(p) > 1 And IsImage(1)
             ApplyFilter()
           EndIf
         EndIf
@@ -139,6 +159,28 @@ Procedure AddColorToPalette(col)
   
   cptCol(p) + 1
   pal(p, cptCol(p)) = col
+  
+  UpdatePal(g)
+EndProcedure
+
+; remove last color from the palette
+Procedure RemoveLastColorToPalette()
+  p = GetGadgetState(2) + 1
+  g = p + 2
+  
+  If cptCol(p) = 0 : Return : EndIf
+  
+  cptCol(p) - 1
+  
+  UpdatePal(g)
+EndProcedure
+
+; remove all colors from the palette
+Procedure RemoveAllColorsToPalette()
+  p = GetGadgetState(2) + 1
+  g = p + 2
+  
+  cptCol(p) = 0
   
   UpdatePal(g)
 EndProcedure
@@ -239,8 +281,8 @@ Procedure ApplyFilter()
 EndProcedure
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 11
-; FirstLine = 3
+; CursorPosition = 104
+; FirstLine = 88
 ; Folding = -
 ; EnableXP
 ; Executable = retro filter.exe
