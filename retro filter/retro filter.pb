@@ -9,7 +9,7 @@ UseJPEGImageEncoder()
 
 ; constantes
 #MAX_PALETTES = 16
-#MAX_COLORS = 256
+#MAX_COLORS = 160
 #BOX_SIZE = 40
 
 ; functions
@@ -150,10 +150,11 @@ Procedure UpdatePal(g)
   StartDrawing(CanvasOutput(g))
   DrawingMode(#PB_2DDrawing_Default)
   i = 0
-  For y = 0 To 199 Step #BOX_SIZE
+  For y = 0 To (4 * #BOX_SIZE) - 1 Step #BOX_SIZE
     For x = 0 To 799 Step #BOX_SIZE
       i + 1
-      Box(x, y, #BOX_SIZE, #BOX_SIZE, pal(p, i))
+      Box(x, y, #BOX_SIZE, #BOX_SIZE, RGB(0, 0, 0))
+      Box(x + 1, y + 1, #BOX_SIZE - 2, #BOX_SIZE - 2, pal(p, i))
     Next
   Next
   StopDrawing()
@@ -238,8 +239,8 @@ Procedure ApplyFilter()
 EndProcedure
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 122
-; FirstLine = 107
+; CursorPosition = 11
+; FirstLine = 3
 ; Folding = -
 ; EnableXP
 ; Executable = retro filter.exe
