@@ -19,6 +19,7 @@ Declare ApplyFilter()
 Declare RemoveLastColorToPalette()
 Declare RemoveAllColorsToPalette()
 Declare.l GetMode()
+Declare RollCurrentPalette()
 
 ; vars
 Global Dim pal(#MAX_PALETTES, #MAX_COLORS)
@@ -43,6 +44,8 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
     MenuItem(15, "Remove All Colors")
     MenuBar()
     MenuItem(16, "Save All Configuration")
+    MenuBar()
+    MenuItem(17, "Roll Palette"   +Chr(9)+"Ctrl+R")
     
     MenuTitle("Filter")
     MenuItem(21, "Mode 0")
@@ -66,6 +69,7 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
   AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_Q, 9)
   AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_A, 13)
   AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_Delete, 14)
+  AddKeyboardShortcut(0, #PB_Shortcut_Control | #PB_Shortcut_R, 17)
   
   For j = 1 To #MAX_PALETTES
     For i = 1 To #MAX_COLORS
@@ -157,6 +161,8 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
             RemoveLastColorToPalette()
           Case 15
             RemoveAllColorsToPalette()
+          Case 17
+            RollCurrentPalette()
           Case 21, 22, 23, 24
             SetMenuItemState(0, 21, 0)
             SetMenuItemState(0, 22, 0)
@@ -330,7 +336,7 @@ Procedure ApplyFilter()
 			  eg = EventGadget()
 			  
 			  If eg = 1
-			    If GetGadgetAttribute(1, #PB_Canvas_Key) = #pb_shortcut_escape
+			    If GetGadgetAttribute(1, #PB_Canvas_Key) = #PB_Shortcut_Escape
 			      StopDrawing()
 			      
 			      Break(2)
@@ -349,6 +355,7 @@ Procedure ApplyFilter()
 	Next
 EndProcedure
 
+; get filter mode
 Procedure.l GetMode()
   md.l = 0
   
@@ -360,10 +367,27 @@ Procedure.l GetMode()
   ProcedureReturn md
 EndProcedure
 
+; roll the palette (very userfull!)
+Procedure RollCurrentPalette()
+  p = GetGadgetState(2) + 1
+  g = p + 2
+  
+  If cptCol(p) > 0
+    mem = pal(p, 1)
+    
+    For i = 2 To cptCol(p)
+      pal(p, i - 1) = pal(p, i)
+    Next
+    
+    pal(p, cptCol(p)) = mem
+  EndIf
+  
+  UpdatePal(g)
+EndProcedure
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 332
-; FirstLine = 312
+; CursorPosition = 377
+; FirstLine = 357
 ; Folding = --
 ; EnableXP
 ; Executable = retro filter.exe
