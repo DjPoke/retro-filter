@@ -103,7 +103,18 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
             If file$ <> ""
               ApplyFilter()
               
-              SaveImage(2, file$)
+              a$ = LCase(GetExtensionPart(file$))
+              If a$ = "" : a$ = "png" : file$ = file$ + "." + a$ : EndIf
+              
+              If a$ = "bmp"
+                SaveImage(2, file$, #PB_ImagePlugin_BMP)
+              ElseIf a$ = "png"
+                SaveImage(2, file$, #PB_ImagePlugin_PNG)
+              ElseIf a$ = "jpg"
+                SaveImage(2, file$, #PB_ImagePlugin_JPEG)
+              Else
+                MessageRequester("Error", "Can't save image !")
+              EndIf
             EndIf
 
           Case 9
@@ -129,7 +140,7 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
             EndIf
           Case 14
             RemoveLastColorToPalette()
-          Case 14
+          Case 15
             RemoveAllColorsToPalette()
         EndSelect
       Case #PB_Event_Gadget
@@ -188,15 +199,21 @@ EndProcedure
 ; update the selected palette
 Procedure UpdatePal(g)
   p = g - 2
-
+  
   StartDrawing(CanvasOutput(g))
   DrawingMode(#PB_2DDrawing_Default)
+  
+  Box(0, 0, 800, 200, RGB(255, 255, 255))
+  
   i = 0
+  
   For y = 0 To (4 * #BOX_SIZE) - 1 Step #BOX_SIZE
     For x = 0 To 799 Step #BOX_SIZE
       i + 1
-      Box(x, y, #BOX_SIZE, #BOX_SIZE, RGB(0, 0, 0))
-      Box(x + 1, y + 1, #BOX_SIZE - 2, #BOX_SIZE - 2, pal(p, i))
+      If i <= cptCol(p)
+        Box(x, y, #BOX_SIZE, #BOX_SIZE, RGB(0, 0, 0))
+        Box(x + 1, y + 1, #BOX_SIZE - 2, #BOX_SIZE - 2, pal(p, i))
+      EndIf
     Next
   Next
   StopDrawing()
@@ -206,6 +223,8 @@ Procedure ApplyFilter()
   p = GetGadgetState(2) + 1
   g = p + 2
   
+  If IsImage(2) : FreeImage(2) : EndIf
+
   CreateImage(2, ImageWidth(1), ImageHeight(1))
     
 	For y = 0 To ImageHeight(1) - 1
@@ -276,13 +295,11 @@ Procedure ApplyFilter()
     DrawImage(ImageID(2), 0, 0, GadgetWidth(1), GadgetHeight(1))  
     StopDrawing()
 	Next
-  
-  FreeImage(2)
 EndProcedure
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 104
-; FirstLine = 88
+; CursorPosition = 106
+; FirstLine = 94
 ; Folding = -
 ; EnableXP
 ; Executable = retro filter.exe
