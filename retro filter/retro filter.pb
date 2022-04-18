@@ -15,6 +15,7 @@ UseJPEGImageEncoder()
 ; functions
 Declare AddColorToPalette(col)
 Declare UpdatePal(p)
+Declare ApplyFilter()
 
 ; vars
 opened = #False
@@ -76,7 +77,12 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
             file$ = OpenFileRequester("Open...", "", "Images|*.png;*.jpg;*.jpeg;*.bmp", 0)
             
             If file$ <> ""
+              If IsImage(1) : FreeImage(1) : EndIf
+              
+              LoadImage(1, file$)
             EndIf
+            
+            ApplyFilter()
           Case 9
             Break
           Case 11
@@ -134,8 +140,96 @@ Procedure UpdatePal(g)
   StopDrawing()
 EndProcedure
 
+Procedure ApplyFilter()
+  If Not IsImage(1) : Return : EndIf
+  
+  p = GetGadgetState(2) + 1
+  g = p + 2
+  
+  CreateImage(2, ImageWidth(1), ImageHeight(1))
+    
+	For y = 0 To ImageHeight(1) - 1
+	  For x = 0 To ImageWidth(1) - 1
+  	  StartDrawing(ImageOutput(1))
+      DrawingMode(#PB_2DDrawing_Default)
+      c = Point(x, y)
+      StopDrawing()
+      
+  	  StartDrawing(ImageOutput(2))
+      DrawingMode(#PB_2DDrawing_Default)
+      
+      r = Red(c)
+      g = Green(c)
+      b = Blue(c)
+
+			found = #False
+			
+			distr = 255
+			distg = 255
+			distb = 255
+			
+			memdistr = 255
+			memdistg = 255
+			memdistb = 255
+			
+			c = 0
+
+			; find exact color
+			For i = 1 To cptCol(p)
+				If Red(pal(p, i)) = r And Green(pal(p, i)) = g And Blue(pal(p, i)) = b
+					c = i
+					found = #True
+
+					Break
+				EndIf
+			Next
+			
+			; find an approximative color
+			If Not found
+  			For i = 1 To cptCol(p)
+					distr = Abs(r - Red(pal(p, i)))
+					distg = Abs(g - Green(pal(p, i)))
+					distb = Abs(b - Blue(pal(p, i)))
+
+					If distr <= memdistr And distg <= memdistg And distb <= memdistb
+						memdistr = distr
+						memdistg = distg
+						memdistb = distb
+						c = i
+						
+						found = #True
+					EndIf
+				Next
+			EndIf
+			
+			; replace the color by the one found
+			If found
+			  Plot(x, y, pal(p, c))
+			EndIf
+		
+		  StopDrawing()
+	  Next
+	Next
+  
+  ; update the view
+  StartDrawing(CanvasOutput(1))
+  DrawingMode(#PB_2DDrawing_Default)
+  
+  If ImageWidth(2) > GadgetWidth(1) Or ImageHeight(2) > GadgetHeight(1)
+    DrawImage(ImageID(2), 0, 0, GadgetWidth(1), GadgetHeight(1))
+  Else
+    Box(0, 0, GadgetWidth(2), GadgetHeight(2), RGB(255, 255, 255))
+    DrawImage(ImageID(2), 0, 0)
+  EndIf
+  
+  StopDrawing()
+  
+  FreeImage(2)
+EndProcedure
+
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 48
-; FirstLine = 27
+; CursorPosition = 206
+; FirstLine = 196
 ; Folding = -
 ; EnableXP
+; Executable = retro filter.exe
