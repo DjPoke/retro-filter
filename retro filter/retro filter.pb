@@ -20,6 +20,7 @@ Declare RemoveLastColorToPalette()
 Declare RemoveAllColorsToPalette()
 Declare.l GetMode()
 Declare RollCurrentPalette()
+Declare min(a.w, b.w)
 
 ; vars
 Global Dim pal(#MAX_PALETTES, #MAX_COLORS)
@@ -47,7 +48,7 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
     MenuBar()
     MenuItem(17, "Roll Palette"   +Chr(9)+"Ctrl+R")
     
-    MenuTitle("Filter")
+    MenuTitle("Dithering")
     MenuItem(21, "Mode 0")
     MenuItem(22, "Mode 1")
     MenuItem(23, "Mode 2")
@@ -57,6 +58,7 @@ If OpenWindow(0, 0, 0, 800, 600, "retro filter", #PB_Window_SystemMenu|#PB_Windo
     MenuItem(31, "Refresh")
     
     SetMenuItemState(0, 24, 1)
+    SetMenuItemState(0, 25, 1)
   EndIf
       
   CanvasGadget(1, 0, 200, 800, 400, #PB_Canvas_Keyboard)
@@ -280,9 +282,16 @@ Procedure ApplyFilter()
     DrawingMode(#PB_2DDrawing_Default)
     
     For x = 0 To ImageWidth(1) - 1
-      r.l = (Round(Red(pt(x, y)) / md, #PB_Round_Down) * md) + md - 1
-      g.l = (Round(Green(pt(x, y)) / md, #PB_Round_Down) * md) + md - 1
-      b.l = (Round(Blue(pt(x, y)) / md, #PB_Round_Down) * md) + md - 1
+ 			; dithering
+  	  v = Mod(x, 2)
+			
+		  If Mod(y, 2) = 1 : v = Mod(x + 1, 2) : EndIf
+			  
+		  v = v * 48 * md
+		  
+      r.w = min(Red(pt(x, y)) + v, 255)
+      g.w = min(Green(pt(x, y)) + v, 255)
+      b.w = min(Blue(pt(x, y)) + v, 255)
 
 			found.b = #False
 			
@@ -305,7 +314,7 @@ Procedure ApplyFilter()
 					Break
 				EndIf
 			Next
-
+			
 			; find an approximative color
 			If Not found
   			For i = 1 To cptCol(p)
@@ -359,10 +368,10 @@ EndProcedure
 Procedure.l GetMode()
   md.l = 0
   
-  If GetMenuItemState(0, 21) = 1 : md = 64 : EndIf
-  If GetMenuItemState(0, 22) = 1 : md = 32 : EndIf
-  If GetMenuItemState(0, 23) = 1 : md = 16 : EndIf
-  If GetMenuItemState(0, 24) = 1 : md = 8 : EndIf
+  If GetMenuItemState(0, 21) = 1 : md = 0 : EndIf
+  If GetMenuItemState(0, 22) = 1 : md = 1 : EndIf
+  If GetMenuItemState(0, 23) = 1 : md = 2 : EndIf
+  If GetMenuItemState(0, 24) = 1 : md = 3 : EndIf
   
   ProcedureReturn md
 EndProcedure
@@ -385,9 +394,16 @@ Procedure RollCurrentPalette()
   UpdatePal(g)
 EndProcedure
 
+Procedure min(a.w, b.w)
+  If a < b
+    ProcedureReturn a
+  EndIf
+  
+  ProcedureReturn b
+EndProcedure
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 377
-; FirstLine = 356
+; CursorPosition = 289
+; FirstLine = 280
 ; Folding = --
 ; EnableXP
 ; UseIcon = icons\icon.ico
